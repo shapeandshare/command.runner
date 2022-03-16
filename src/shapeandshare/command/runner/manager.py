@@ -1,5 +1,8 @@
+import configparser
 import sys
 from enum import Enum
+from pathlib import Path
+from typing import Any, Optional
 
 from .contacts.dtos.base_model import BaseModel
 from .contacts.unknown_argument_error import UnknownArgumentError
@@ -13,6 +16,14 @@ class CommandType(str, Enum):
 
 
 class Manager(BaseModel):
+    base_file: str = "bcr.config"
+
+    base_path: Path
+
+    @property
+    def conf(self) -> Path:
+        return self.base_path / self.base_file
+
     def main(self) -> None:
         try:
             self.process()
@@ -42,14 +53,27 @@ class Manager(BaseModel):
         self.display_generic_help()
 
     def initial_environment(self, arguments: list[str]):
-        print(f"initial_environment, Arguments: ({arguments})")
         if len(arguments) > 0:
+            print(f"initial_environment, Arguments: ({arguments})")
             raise UnknownArgumentError(command="init", message="No arguments to init are supported!")
+        config: configparser.ConfigParser = configparser.ConfigParser()
+        config["scripts"] = {"hello": ["echo hello world", "python -c 'print(\"hello world\")'"]}
+        with open(self.conf.resolve().as_posix(), mode="w", encoding="utf-8") as configfile:
+            config.write(configfile)
 
-    def run_command(self, arguments: list[str]):
+    def run_command(self, arguments: list[str]) -> None:
         print(f"run_command, Arguments: ({arguments})")
         if len(arguments) != 1:
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
+        config: configparser.ConfigParser = configparser.ConfigParser()
+        config.read(self.conf.resolve().as_posix())
+
+        if arguments[0] in config["scripts"]:
+            command_list: list = config["scripts"][arguments[0]]
+            for command in command_list:
+                print(command)
+        else:
+            raise UnknownArgumentError(command="run", message=f"Unknown script {arguments[0]}")
 
     def subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
         if subcommand == CommandType.help:
