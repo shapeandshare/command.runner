@@ -2,7 +2,8 @@ import sys
 from enum import Enum
 
 from .contacts.dtos.base_model import BaseModel
-from .contacts.unknown_subcommand_error import UnknownCommandError
+from .contacts.unknown_argument_error import UnknownArgumentError
+from .contacts.unknown_command_error import UnknownCommandError
 
 
 class CommandType(str, Enum):
@@ -17,6 +18,8 @@ class Manager(BaseModel):
             self.process()
         except UnknownCommandError as error:
             self.display_generic_help()
+        except UnknownArgumentError as error:
+            print(str(error))
 
     def process(self) -> None:
         argument_count: int = len(sys.argv)
@@ -40,9 +43,13 @@ class Manager(BaseModel):
 
     def initial_environment(self, arguments: list[str]):
         print(f"initial_environment, Arguments: ({arguments})")
+        if len(arguments) > 0:
+            raise UnknownArgumentError(command="init", message="No arguments to init are supported!")
 
     def run_command(self, arguments: list[str]):
         print(f"run_command, Arguments: ({arguments})")
+        if len(arguments) != 1:
+            raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
 
     def subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
         if subcommand == CommandType.help:
