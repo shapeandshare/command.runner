@@ -1,18 +1,20 @@
 import configparser
+import json
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Union
 
 from .contacts.dtos.base_model import BaseModel
+from .contacts.parse_error import ParseError
 from .contacts.unknown_argument_error import UnknownArgumentError
 from .contacts.unknown_command_error import UnknownCommandError
 
 
 class CommandType(str, Enum):
-    help = "help"
-    init = "init"
-    run = "run"
+    HELP = "help"
+    INIT = "init"
+    RUN = "run"
 
 
 class Manager(BaseModel):
@@ -28,8 +30,11 @@ class Manager(BaseModel):
         try:
             self.process()
         except UnknownCommandError as error:
+            print(str(error))
             self.display_generic_help()
         except UnknownArgumentError as error:
+            print(str(error))
+        except ParseError as error:
             print(str(error))
 
     def process(self) -> None:
@@ -44,6 +49,17 @@ class Manager(BaseModel):
             except ValueError as error:
                 raise UnknownCommandError(f"Unknown command {sys.argv[1]}") from error
 
+    def subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
+        if subcommand == CommandType.HELP:
+            self.display_full_help()
+        elif subcommand == CommandType.INIT:
+            self.initial_environment(arguments=arguments)
+        elif subcommand == CommandType.RUN:
+            self.run_command(arguments=arguments)
+        else:
+            # should not be possible to hit
+            raise UnknownCommandError(f"Unknown command {subcommand}")
+
     def display_generic_help(self) -> None:
         summary: str = "Usage: bcr <command>\n" "\n" "where <command> is one of:\n" "help, init, run"
         print(summary)
@@ -56,32 +72,29 @@ class Manager(BaseModel):
         if len(arguments) > 0:
             print(f"initial_environment, Arguments: ({arguments})")
             raise UnknownArgumentError(command="init", message="No arguments to init are supported!")
+
         config: configparser.ConfigParser = configparser.ConfigParser()
-        config["scripts"] = {"hello": ["echo hello world", "python -c 'print(\"hello world\")'"]}
+        config["scripts"] = {"hello": json.dumps(["echo hello world", "python -c 'print(\"hello world\")'"])}
         with open(self.conf.resolve().as_posix(), mode="w", encoding="utf-8") as configfile:
             config.write(configfile)
 
     def run_command(self, arguments: list[str]) -> None:
         print(f"run_command, Arguments: ({arguments})")
-        if len(arguments) != 1:
+        if len(arguments) == 0:
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
         config: configparser.ConfigParser = configparser.ConfigParser()
         config.read(self.conf.resolve().as_posix())
 
-        if arguments[0] in config["scripts"]:
-            command_list: list = config["scripts"][arguments[0]]
-            for command in command_list:
-                print(command)
-        else:
-            raise UnknownArgumentError(command="run", message=f"Unknown script {arguments[0]}")
+        try:
+            commands: Union[list, str] = json.loads(config["scripts"][arguments[0]])
+        except KeyError as error:
+            raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]")
+        except json.JSONDecodeError as error:
+            raise ParseError(f"Unable to load [script] {arguments[0]}.  It was not JSON loadable.")
 
-    def subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
-        if subcommand == CommandType.help:
-            self.display_full_help()
-        elif subcommand == CommandType.init:
-            self.initial_environment(arguments=arguments)
-        elif subcommand == CommandType.run:
-            self.run_command(arguments=arguments)
-        else:
-            # should not be possible to hit
-            raise UnknownCommandError(f"Unknown command {subcommand}")
+        # If given a single string then drop it into a list.
+        if type(commands) == "str":
+            commands = [commands]
+
+        for command in commands:
+            print(f"run: ({command})")
