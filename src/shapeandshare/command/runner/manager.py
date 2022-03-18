@@ -1,5 +1,7 @@
 import configparser
 import json
+import shlex
+import subprocess
 import sys
 from enum import Enum
 from pathlib import Path
@@ -97,4 +99,26 @@ class Manager(BaseModel):
             commands = [commands]
 
         for command in commands:
-            print(f"run: ({command})")
+            print(command)
+            args = shlex.split(command)
+            # output = Manager.shell_out(shell_out_cmd=command)
+            with subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                print(process.stdout.read())
+                print(process.stderr.read())
+                # print(process.wait())
+                # log.write(proc.stdout.read())
+                # outs, errs = process.communicate(timeout=15)
+            if process.returncode != 0:
+                print(f"Failure while executing command: ({process.returncode})")
+
+    # @staticmethod
+    # def shell_out(shell_out_cmd: str) -> tuple[str, str, int]:
+    #     args = shlex.split(shell_out_cmd)
+    #     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #
+    #     try:
+    #         outs, errs = proc.communicate(timeout=60)
+    #     except subprocess.TimeoutExpired:
+    #         proc.kill()
+    #         outs, errs = proc.communicate()
+    #     return outs.decode(encoding="utf-8"), errs.decode(encoding="utf-8"), proc.returncode
