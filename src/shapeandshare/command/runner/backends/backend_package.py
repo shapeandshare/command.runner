@@ -39,6 +39,6 @@ class BackendPackage(AbstractBackend):
         if len(arguments) != 1:
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
         if arguments[0] in self.package.scripts:
-            BackendPackage._command_executor(commands=[self.package.scripts[arguments[0]]], shell=True)
+            BackendPackage._command_executor(commands=[self.package.scripts[arguments[0]]])
         else:
             raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]")

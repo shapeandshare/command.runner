@@ -4,6 +4,8 @@ class UnknownArgumentError(Exception):
     command: str
     message: str
 
+    # pylint: disable=super-init-not-called,fixme
+    # TODO: address linting.
     def __init__(self, command: str, message: str):
         # super.__init__()
         self.command = command

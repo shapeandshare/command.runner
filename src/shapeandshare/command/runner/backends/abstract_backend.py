@@ -1,4 +1,3 @@
-import shlex
 import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -23,33 +22,14 @@ class AbstractBackend(ABC):
         """run_command"""
 
     @staticmethod
-    def _command_executor(commands: list[str], shell: bool = False) -> None:
+    def _command_executor(commands: list[str], per_command_timeout: int = 60) -> None:
         # Command executor
-
         for command in commands:
             print(command)
-            if shell:
-                with subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-                    output_stdout, output_stderr = process.communicate()
-                    if output_stdout:
-                        print(output_stdout.decode(encoding="utf-8").strip())
-                    if output_stderr:
-                        print(output_stderr.decode(encoding="utf-8").strip())
-                    if process.returncode != 0:
-                        raise SubprocessFailureError(f"{command} failed with exit code {return_code}")
-            else:
-                args = shlex.split(command)
-                with subprocess.Popen(args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-                    while True:
-                        output_stdout = process.stdout.readline()
-                        output_stderr = process.stderr.readline()
-                        if output_stdout:
-                            print(output_stdout.decode(encoding="utf-8").strip())
-                        if output_stderr:
-                            print(output_stderr.decode(encoding="utf-8").strip())
-                        if process.poll() is not None:
-                            break
-
-                    return_code: int = process.poll()
-                if return_code != 0:
-                    raise SubprocessFailureError(f"{command} failed with exit code {return_code}")
+            with subprocess.Popen(command, shell=True) as process:
+                try:
+                    process.wait(timeout=per_command_timeout)
+                except subprocess.TimeoutExpired as error:
+                    raise SubprocessFailureError(
+                        f"command {command} exceeded timeout limit of {per_command_timeout}"
+                    ) from error

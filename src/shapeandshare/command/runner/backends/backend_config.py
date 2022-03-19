@@ -53,4 +53,4 @@ class BackendConfig(AbstractBackend):
             commands = raw_commands
 
         # Command executor
-        BackendConfig._command_executor(commands=commands, shell=True)
+        BackendConfig._command_executor(commands=commands)
