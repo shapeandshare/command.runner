@@ -1,0 +1,2 @@
+class SubprocessFailureError(Exception):
+    """ """

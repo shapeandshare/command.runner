@@ -5,10 +5,11 @@ import subprocess
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from .contacts.dtos.base_model import BaseModel
 from .contacts.parse_error import ParseError
+from .contacts.subprocess_failure_error import SubprocessFailureError
 from .contacts.unknown_argument_error import UnknownArgumentError
 from .contacts.unknown_command_error import UnknownCommandError
 
@@ -81,44 +82,37 @@ class Manager(BaseModel):
             config.write(configfile)
 
     def run_command(self, arguments: list[str]) -> None:
-        print(f"run_command, Arguments: ({arguments})")
+        # print(f"run_command, Arguments: ({arguments})")
         if len(arguments) == 0:
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
         config: configparser.ConfigParser = configparser.ConfigParser()
         config.read(self.conf.resolve().as_posix())
 
         try:
-            commands: Union[list, str] = json.loads(config["scripts"][arguments[0]])
+            raw_commands: Union[list, str] = json.loads(config["scripts"][arguments[0]])
+            # print(f"raw_commands: ({raw_commands})")
         except KeyError as error:
-            raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]")
+            raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]") from error
         except json.JSONDecodeError as error:
-            raise ParseError(f"Unable to load [script] {arguments[0]}.  It was not JSON loadable.")
+            raise ParseError(f"Unable to load [script] {arguments[0]}.  It was not JSON parsable.") from error
 
         # If given a single string then drop it into a list.
-        if type(commands) == "str":
-            commands = [commands]
-
+        commands: list = []
+        if isinstance(raw_commands, str):
+            commands.append(f"{raw_commands}")
+        else:
+            commands += raw_commands
         for command in commands:
             print(command)
             args = shlex.split(command)
-            # output = Manager.shell_out(shell_out_cmd=command)
-            with subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-                print(process.stdout.read())
-                print(process.stderr.read())
-                # print(process.wait())
-                # log.write(proc.stdout.read())
-                # outs, errs = process.communicate(timeout=15)
-            if process.returncode != 0:
-                print(f"Failure while executing command: ({process.returncode})")
+            with subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                while True:
+                    output = process.stdout.readline()
+                    if output:
+                        print(output.decode(encoding="utf-8").strip())
+                    if process.poll() is not None:
+                        break
 
-    # @staticmethod
-    # def shell_out(shell_out_cmd: str) -> tuple[str, str, int]:
-    #     args = shlex.split(shell_out_cmd)
-    #     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #
-    #     try:
-    #         outs, errs = proc.communicate(timeout=60)
-    #     except subprocess.TimeoutExpired:
-    #         proc.kill()
-    #         outs, errs = proc.communicate()
-    #     return outs.decode(encoding="utf-8"), errs.decode(encoding="utf-8"), proc.returncode
+                return_code: int = process.poll()
+            if return_code != 0:
+                raise SubprocessFailureError(f"{command} failed with exit code {return_code}")
