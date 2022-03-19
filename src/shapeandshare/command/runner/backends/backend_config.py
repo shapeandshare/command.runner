@@ -32,14 +32,12 @@ class BackendConfig(AbstractBackend):
             config.write(configfile)
 
     def run_command(self, arguments: list[str]) -> None:
-        # print(f"run_command, Arguments: ({arguments})")
         if len(arguments) == 0:
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
         config: configparser.ConfigParser = configparser.ConfigParser()
         config.read(self.conf.resolve().as_posix())
         try:
             raw_commands: Union[list, str] = json.loads(config["scripts"][arguments[0]])
-            # print(f"raw_commands: ({raw_commands})")
         except KeyError as error:
             raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]") from error
         except json.JSONDecodeError as error:

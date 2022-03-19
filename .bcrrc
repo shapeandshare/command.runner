@@ -1,2 +1,2 @@
 [config]
-backend=package
+backend=config
