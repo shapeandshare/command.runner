@@ -3,9 +3,10 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
-from .backend_factory import BackendFactory, BackendType
+from .backends.backend_factory import BackendFactory, BackendType
+from .backends.backend_package import BackendPackage
 from .contacts.command_type import CommandType
-from .contacts.dtos.config_backend import ConfigBackend
+from .backends.backend_config import BackendConfig
 from .contacts.errors.parse_error import ParseError
 from .contacts.errors.unknown_argument_error import UnknownArgumentError
 from .contacts.errors.unknown_command_error import UnknownCommandError
@@ -15,7 +16,7 @@ class Manager:
 
     config_file: str
     base_path: Path
-    backend: Union[ConfigBackend]
+    backend: Union[BackendConfig, BackendPackage]
 
     def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
         if config_file:
@@ -32,7 +33,7 @@ class Manager:
     def conf(self) -> Path:
         return self.base_path / self.config_file
 
-    def _load_backend(self) -> Union[ConfigBackend]:
+    def _load_backend(self) -> Union[BackendConfig, BackendPackage]:
         backend: str = "config"
         if self.conf.exists():
             if self.conf.is_file():

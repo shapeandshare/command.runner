@@ -5,13 +5,13 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Union
 
-from ..errors.parse_error import ParseError
-from ..errors.subprocess_failure_error import SubprocessFailureError
-from ..errors.unknown_argument_error import UnknownArgumentError
-from ..errors.unknown_command_error import UnknownCommandError
+from ..contacts.errors.parse_error import ParseError
+from ..contacts.errors.subprocess_failure_error import SubprocessFailureError
+from ..contacts.errors.unknown_argument_error import UnknownArgumentError
+from ..contacts.errors.unknown_command_error import UnknownCommandError
 
 
-class ConfigBackend:
+class BackendConfig:
     config_file: str
     base_path: Path
 
@@ -46,7 +46,6 @@ class ConfigBackend:
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
         config: configparser.ConfigParser = configparser.ConfigParser()
         config.read(self.conf.resolve().as_posix())
-
         try:
             raw_commands: Union[list, str] = json.loads(config["scripts"][arguments[0]])
             # print(f"raw_commands: ({raw_commands})")
