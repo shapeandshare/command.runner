@@ -3,10 +3,10 @@ import sys
 from pathlib import Path
 from typing import Optional, Union
 
+from .backends.backend_config import BackendConfig
 from .backends.backend_factory import BackendFactory, BackendType
 from .backends.backend_package import BackendPackage
 from .contacts.command_type import CommandType
-from .backends.backend_config import BackendConfig
 from .contacts.errors.parse_error import ParseError
 from .contacts.errors.unknown_argument_error import UnknownArgumentError
 from .contacts.errors.unknown_command_error import UnknownCommandError

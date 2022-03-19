@@ -3,10 +3,10 @@ import json
 from pathlib import Path
 from typing import Optional, Union
 
-from .abstract_backend import AbstractBackend
 from ..contacts.errors.parse_error import ParseError
 from ..contacts.errors.unknown_argument_error import UnknownArgumentError
 from ..contacts.errors.unknown_command_error import UnknownCommandError
+from .abstract_backend import AbstractBackend
 
 
 class BackendConfig(AbstractBackend):
@@ -53,4 +53,4 @@ class BackendConfig(AbstractBackend):
             commands = raw_commands
 
         # Command executor
-        BackendConfig._command_executor(commands=commands)
+        BackendConfig._command_executor(commands=commands, shell=True)

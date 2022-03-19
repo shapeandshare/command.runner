@@ -1,26 +1,27 @@
 from pathlib import Path
 from typing import Optional
 
+from ..contacts.dtos.package import Package
 from ..contacts.errors.unknown_argument_error import UnknownArgumentError
+from ..contacts.errors.unknown_command_error import UnknownCommandError
+from .abstract_backend import AbstractBackend
 
 
-class BackendPackage:
-    config_file: str
-    base_path: Path
+class BackendPackage(AbstractBackend):
+    package: Package
 
     def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
         if config_file:
             self.config_file = config_file
         else:
-            self.config_file = "bcr.config"
+            self.config_file = "package.json"
         if base_path:
             self.base_path: Path = Path(base_path)
         else:
             self.base_path: Path = Path(".")
 
-    @property
-    def conf(self) -> Path:
-        return self.base_path / self.config_file
+        self.package = Package.parse_file(self.conf.resolve().as_posix())
+        print(self.package.scripts)
 
     def initial_environment(self, arguments: list[str]) -> None:
         if len(arguments) > 0:
@@ -35,5 +36,9 @@ class BackendPackage:
 
     def run_command(self, arguments: list[str]) -> None:
         # print(f"run_command, Arguments: ({arguments})")
-        if len(arguments) == 0:
+        if len(arguments) != 1:
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
+        if arguments[0] in self.package.scripts:
+            BackendPackage._command_executor(commands=[self.package.scripts[arguments[0]]], shell=True)
+        else:
+            raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]")

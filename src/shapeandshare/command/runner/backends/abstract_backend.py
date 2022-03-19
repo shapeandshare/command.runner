@@ -23,23 +23,33 @@ class AbstractBackend(ABC):
         """run_command"""
 
     @staticmethod
-    def _command_executor(commands: list[str]) -> None:
+    def _command_executor(commands: list[str], shell: bool = False) -> None:
         # Command executor
 
         for command in commands:
             print(command)
-            args = shlex.split(command)
-            with subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-                while True:
-                    output_stdout = process.stdout.readline()
-                    output_stderr = process.stderr.readline()
+            if shell:
+                with subprocess.Popen(command, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                    output_stdout, output_stderr = process.communicate()
                     if output_stdout:
                         print(output_stdout.decode(encoding="utf-8").strip())
                     if output_stderr:
                         print(output_stderr.decode(encoding="utf-8").strip())
-                    if process.poll() is not None:
-                        break
+                    if process.returncode != 0:
+                        raise SubprocessFailureError(f"{command} failed with exit code {return_code}")
+            else:
+                args = shlex.split(command)
+                with subprocess.Popen(args, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                    while True:
+                        output_stdout = process.stdout.readline()
+                        output_stderr = process.stderr.readline()
+                        if output_stdout:
+                            print(output_stdout.decode(encoding="utf-8").strip())
+                        if output_stderr:
+                            print(output_stderr.decode(encoding="utf-8").strip())
+                        if process.poll() is not None:
+                            break
 
-                return_code: int = process.poll()
-            if return_code != 0:
-                raise SubprocessFailureError(f"{command} failed with exit code {return_code}")
+                    return_code: int = process.poll()
+                if return_code != 0:
+                    raise SubprocessFailureError(f"{command} failed with exit code {return_code}")

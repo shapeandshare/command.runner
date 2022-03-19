@@ -1,8 +1,8 @@
 from typing import Union
 
+from ..backends.backend_config import BackendConfig
 from ..backends.backend_package import BackendPackage
 from ..contacts.backend_type import BackendType
-from ..backends.backend_config import BackendConfig
 from ..contacts.errors.unknown_backend_error import UnknownBackendError
 
 
