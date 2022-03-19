@@ -1,20 +1,15 @@
 import configparser
 import json
-import shlex
-import subprocess
 from pathlib import Path
 from typing import Optional, Union
 
+from .abstract_backend import AbstractBackend
 from ..contacts.errors.parse_error import ParseError
-from ..contacts.errors.subprocess_failure_error import SubprocessFailureError
 from ..contacts.errors.unknown_argument_error import UnknownArgumentError
 from ..contacts.errors.unknown_command_error import UnknownCommandError
 
 
-class BackendConfig:
-    config_file: str
-    base_path: Path
-
+class BackendConfig(AbstractBackend):
     def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
         if config_file:
             self.config_file = config_file
@@ -25,11 +20,7 @@ class BackendConfig:
         else:
             self.base_path: Path = Path(".")
 
-    @property
-    def conf(self) -> Path:
-        return self.base_path / self.config_file
-
-    def initial_environment(self, arguments: list[str]):
+    def initial_environment(self, arguments: list[str]) -> None:
         if len(arguments) > 0:
             print(f"initial_environment, Arguments: ({arguments})")
             raise UnknownArgumentError(command="init", message="No arguments to init are supported!")
@@ -60,17 +51,6 @@ class BackendConfig:
             commands.append(raw_commands)
         else:
             commands = raw_commands
-        for command in commands:
-            print(command)
-            args = shlex.split(command)
-            with subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-                while True:
-                    output = process.stdout.readline()
-                    if output:
-                        print(output.decode(encoding="utf-8").strip())
-                    if process.poll() is not None:
-                        break
 
-                return_code: int = process.poll()
-            if return_code != 0:
-                raise SubprocessFailureError(f"{command} failed with exit code {return_code}")
+        # Command executor
+        BackendConfig._command_executor(commands=commands)
