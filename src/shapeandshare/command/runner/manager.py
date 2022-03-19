@@ -1,40 +1,58 @@
 import configparser
-import json
-import shlex
-import subprocess
 import sys
-from enum import Enum
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
-from .contacts.dtos.base_model import BaseModel
-from .contacts.parse_error import ParseError
-from .contacts.subprocess_failure_error import SubprocessFailureError
-from .contacts.unknown_argument_error import UnknownArgumentError
-from .contacts.unknown_command_error import UnknownCommandError
-
-
-class CommandType(str, Enum):
-    HELP = "help"
-    INIT = "init"
-    RUN = "run"
+from .backend_factory import BackendFactory, BackendType
+from .contacts.command_type import CommandType
+from .contacts.dtos.config_backend import ConfigBackend
+from .contacts.errors.parse_error import ParseError
+from .contacts.errors.unknown_argument_error import UnknownArgumentError
+from .contacts.errors.unknown_command_error import UnknownCommandError
 
 
-class Manager(BaseModel):
-    base_file: str = "bcr.config"
+class Manager:
 
+    config_file: str
     base_path: Path
+    backend: Union[ConfigBackend]
+
+    def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
+        if config_file:
+            self.config_file = config_file
+        else:
+            self.config_file = ".bcrrc"
+        if base_path:
+            self.base_path: Path = Path(base_path)
+        else:
+            self.base_path: Path = Path(".")
+        self.backend = self._load_backend()
 
     @property
     def conf(self) -> Path:
-        return self.base_path / self.base_file
+        return self.base_path / self.config_file
+
+    def _load_backend(self) -> Union[ConfigBackend]:
+        backend: str = "config"
+        if self.conf.exists():
+            if self.conf.is_file():
+                # load file..
+                config: configparser.ConfigParser = configparser.ConfigParser()
+                config.read(self.conf.resolve().as_posix())
+                try:
+                    backend: str = config["config"]["backend"]
+                except KeyError as error:
+                    raise UnknownCommandError("Missing backend in config section") from error
+            else:
+                raise ParseError(f"{self.conf.resolve().as_posix()} exists but is not a file, expected a file")
+        return BackendFactory.build(backend_type=BackendType(backend))
 
     def main(self) -> None:
         try:
             self.process()
         except UnknownCommandError as error:
             print(str(error))
-            self.display_generic_help()
+            Manager.display_generic_help()
         except UnknownArgumentError as error:
             print(str(error))
         except ParseError as error:
@@ -44,7 +62,7 @@ class Manager(BaseModel):
         argument_count: int = len(sys.argv)
 
         if argument_count == 1:
-            self.display_generic_help()
+            Manager.display_generic_help()
         else:
             try:
                 command: CommandType = CommandType(sys.argv[1])
@@ -54,66 +72,21 @@ class Manager(BaseModel):
 
     def subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
         if subcommand == CommandType.HELP:
-            self.display_full_help()
+            Manager.display_full_help()
         elif subcommand == CommandType.INIT:
-            self.initial_environment(arguments=arguments)
+            self.backend.initial_environment(arguments=arguments)
         elif subcommand == CommandType.RUN:
-            self.run_command(arguments=arguments)
+            self.backend.run_command(arguments=arguments)
         else:
             # should not be possible to hit
             raise UnknownCommandError(f"Unknown command {subcommand}")
 
-    def display_generic_help(self) -> None:
+    @staticmethod
+    def display_generic_help() -> None:
         summary: str = "Usage: bcr <command>\n" "\n" "where <command> is one of:\n" "help, init, run"
         print(summary)
 
-    def display_full_help(self):
+    @staticmethod
+    def display_full_help():
         """TODO: Update!"""
-        self.display_generic_help()
-
-    def initial_environment(self, arguments: list[str]):
-        if len(arguments) > 0:
-            print(f"initial_environment, Arguments: ({arguments})")
-            raise UnknownArgumentError(command="init", message="No arguments to init are supported!")
-
-        config: configparser.ConfigParser = configparser.ConfigParser()
-        config.read(self.conf.resolve().as_posix())
-        # config["scripts"] = {"asd:asd": "asd"}
-        with open(self.conf.resolve().as_posix(), mode="w", encoding="utf-8") as configfile:
-            config.write(configfile)
-
-    def run_command(self, arguments: list[str]) -> None:
-        # print(f"run_command, Arguments: ({arguments})")
-        if len(arguments) == 0:
-            raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
-        config: configparser.ConfigParser = configparser.ConfigParser()
-        config.read(self.conf.resolve().as_posix())
-
-        try:
-            raw_commands: Union[list, str] = json.loads(config["scripts"][arguments[0]])
-            # print(f"raw_commands: ({raw_commands})")
-        except KeyError as error:
-            raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]") from error
-        except json.JSONDecodeError as error:
-            raise ParseError(f"Unable to load [script] {arguments[0]}.  It was not JSON parsable.") from error
-
-        # If given a single string then drop it into a list.
-        commands: list = []
-        if isinstance(raw_commands, str):
-            commands.append(raw_commands)
-        else:
-            commands = raw_commands
-        for command in commands:
-            print(command)
-            args = shlex.split(command)
-            with subprocess.Popen(args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-                while True:
-                    output = process.stdout.readline()
-                    if output:
-                        print(output.decode(encoding="utf-8").strip())
-                    if process.poll() is not None:
-                        break
-
-                return_code: int = process.poll()
-            if return_code != 0:
-                raise SubprocessFailureError(f"{command} failed with exit code {return_code}")
+        Manager.display_generic_help()

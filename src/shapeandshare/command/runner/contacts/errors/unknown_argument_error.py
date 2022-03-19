@@ -5,6 +5,7 @@ class UnknownArgumentError(Exception):
     message: str
 
     def __init__(self, command: str, message: str):
+        # super.__init__()
         self.command = command
         self.message = message
 
