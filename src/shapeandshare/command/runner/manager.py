@@ -5,7 +5,7 @@ import subprocess
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 from .contacts.dtos.base_model import BaseModel
 from .contacts.parse_error import ParseError
@@ -77,7 +77,8 @@ class Manager(BaseModel):
             raise UnknownArgumentError(command="init", message="No arguments to init are supported!")
 
         config: configparser.ConfigParser = configparser.ConfigParser()
-        config["scripts"] = {"hello": json.dumps(["echo hello world", "python -c 'print(\"hello world\")'"])}
+        config.read(self.conf.resolve().as_posix())
+        # config["scripts"] = {"asd:asd": "asd"}
         with open(self.conf.resolve().as_posix(), mode="w", encoding="utf-8") as configfile:
             config.write(configfile)
 
@@ -99,9 +100,9 @@ class Manager(BaseModel):
         # If given a single string then drop it into a list.
         commands: list = []
         if isinstance(raw_commands, str):
-            commands.append(f"{raw_commands}")
+            commands.append(raw_commands)
         else:
-            commands += raw_commands
+            commands = raw_commands
         for command in commands:
             print(command)
             args = shlex.split(command)
