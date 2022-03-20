@@ -1,0 +1,7 @@
+[command]
+# omit this to have no timeout
+timeout=60
+
+[config]
+# config, package are supported
+type=config
