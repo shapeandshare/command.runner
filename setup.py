@@ -5,10 +5,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="sacr",
-    version="0.3.0",
+    version="0.3.1",
     author="Joshua C. Burt",
     author_email="joshburt@shapeandshare.com",
-    description="Aliased command runner",
+    description="Aliased Command Runner",
     long_description=long_description,
     long_description_content_type="text/markdown",
     package_dir={"": "src"},
