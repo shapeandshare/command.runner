@@ -17,10 +17,10 @@ class BackendConfig(AbstractBackend):
     Attributes
     ----------
     DEFAULT_CONFIG_FILE
-        The default config file, default: "bcr.config"
+        The default config file, default: "sacr.config"
     """
 
-    DEFAULT_CONFIG_FILE: str = "bcr.config"
+    DEFAULT_CONFIG_FILE: str = "sacr.config"
 
     def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
         super().__init__(config_file=config_file, base_path=base_path)

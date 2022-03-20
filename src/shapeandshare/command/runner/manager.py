@@ -27,7 +27,7 @@ class Manager:
     settings
         Manager settings configuration.
     DEFAULT_CONFIG_FILE
-        The default config file to use for manager settings, default: ".bcrrc"
+        The default config file to use for manager settings, default: ".sacrrc"
     DEFAULT_CONFIG_PATH
         The default location for the manager configuration file, default: Path(".")
     DEFAULT_COMMAND_TIMEOUT
@@ -40,7 +40,7 @@ class Manager:
     settings: ManagerConfig
 
     # Global Defaults
-    DEFAULT_CONFIG_FILE: str = ".bcrrc"
+    DEFAULT_CONFIG_FILE: str = ".sacrrc"
     DEFAULT_CONFIG_PATH: Path = Path(".")
     DEFAULT_COMMAND_TIMEOUT: Optional[int] = None  # In seconds
     DEFAULT_CONFIG_TYPE: str = "config"
@@ -161,7 +161,7 @@ class Manager:
     @staticmethod
     def display_generic_help() -> None:
         """Print out summary help"""
-        summary: str = "Usage: bcr <command>\n" "\n" "where <command> is one of:\n" "help, init, run"
+        summary: str = "Usage: sacr <command>\n" "\n" "where <command> is one of:\n" "help, init, run"
         print(summary)
 
     @staticmethod
