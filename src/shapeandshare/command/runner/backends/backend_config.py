@@ -45,7 +45,7 @@ class BackendConfig(AbstractBackend):
         if self.conf.exists():
             if self.conf.is_file():
                 # load file..
-                config: configparser.ConfigParser = configparser.ConfigParser()
+                config: configparser.ConfigParser = configparser.ConfigParser(delimiters="=")
                 config.read(self.conf.resolve().as_posix())
 
                 # Process the sections
