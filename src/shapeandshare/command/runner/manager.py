@@ -59,6 +59,7 @@ class Manager:
     @staticmethod
     def _load_configuration(config_file: Path) -> ManagerConfig:
         """
+        Load Manager Configuration
 
         Parameters
         ----------
@@ -102,18 +103,21 @@ class Manager:
         """Main entry point for the processing of the cli command."""
 
         try:
-            self.process()
+            self._process()
         except (UnknownCommandError, UnknownArgumentError, ParseError) as error:
             # Known Errors
             logging.getLogger(__name__).debug(str(error))
             print(str(error))
         except Exception as error:
-            # We encountered an unhandled exception.  This shouldn't happen. :?
+            # We encountered an unhandled exception.  This shouldn't happen.
+            print("---- Unhandled Exception ----")
             logging.getLogger(__name__).debug(str(error))
             print(str(error))
         Manager.display_generic_help()
 
-    def process(self) -> None:
+    def _process(self) -> None:
+        """Process CLI Arguments"""
+
         argument_count: int = len(sys.argv)
 
         if argument_count == 1:
@@ -121,11 +125,13 @@ class Manager:
         else:
             try:
                 command: CommandType = CommandType(sys.argv[1])
-                self.subcommand(subcommand=command, arguments=sys.argv[2:])
+                self._subcommand(subcommand=command, arguments=sys.argv[2:])
             except ValueError as error:
                 raise UnknownCommandError(f"Unknown command {sys.argv[1]}") from error
 
-    def subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
+    def _subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
+        """Process the given subcommand"""
+
         if subcommand == CommandType.HELP:
             Manager.display_full_help()
         elif subcommand == CommandType.INIT:
@@ -137,10 +143,11 @@ class Manager:
 
     @staticmethod
     def display_generic_help() -> None:
+        """Print out summary help"""
         summary: str = "Usage: bcr <command>\n" "\n" "where <command> is one of:\n" "help, init, run"
         print(summary)
 
     @staticmethod
     def display_full_help():
-        """TODO: Update!"""
+        """Print our full help"""
         Manager.display_generic_help()
