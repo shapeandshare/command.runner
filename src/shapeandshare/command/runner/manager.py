@@ -1,4 +1,5 @@
 import configparser
+import logging
 import sys
 from pathlib import Path
 from typing import Optional, Union
@@ -12,6 +13,11 @@ from .contacts.errors.parse_error import ParseError
 from .contacts.errors.unknown_argument_error import UnknownArgumentError
 from .contacts.errors.unknown_command_error import UnknownCommandError
 
+DEFAULT_CONFIG_FILE: str = ".bcrrc"
+DEFAULT_CONFIG_PATH: Path = Path(".")
+DEFAULT_COMMAND_TIMEOUT: int = 60  # In seconds
+DEFAULT_CONFIG_TYPE: str = "config"
+
 
 class Manager:
     backend: Union[BackendConfig, BackendPackage]
@@ -19,40 +25,51 @@ class Manager:
 
     def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
         if not config_file:
-            config_file = ".bcrrc"
+            config_file = DEFAULT_CONFIG_FILE
         if not base_path:
-            base_path: Path = Path(".")
+            base_path: Path = DEFAULT_CONFIG_PATH
         self.settings = Manager._load_configuration(config_file=(base_path / config_file))
-        self.backend = self._load_backend()
+        self.backend = BackendFactory.build(backend_type=self.settings.config.type)
 
     @staticmethod
     def _load_configuration(config_file: Path) -> ManagerConfig:
-        config_partial: dict = {"command": {"timout": 60}, "config": {"type": "config"}}
+        config_partial: dict = {"command": {"timout": DEFAULT_COMMAND_TIMEOUT}, "config": {"type": DEFAULT_CONFIG_TYPE}}
         if config_file.exists():
             if config_file.is_file():
                 # load file..
+                logging.getLogger(__name__).debug(f"Loading config file: {config_file.resolve().as_posix()}")
                 config: configparser.ConfigParser = configparser.ConfigParser()
                 config.read(config_file.resolve().as_posix())
+
+                # Process the sections
                 for section in config.sections():
                     if section not in config_partial:
                         config_partial[section] = {}
                     for (key, val) in config.items(section):
                         config_partial[section][key] = val
-        return ManagerConfig.parse_obj(config_partial)
+            else:
+                logging.getLogger(__name__).warning(
+                    f"[SKIPPING] Config file load - Was not a file? {config_file.resolve().as_posix()}"
+                )
+        else:
+            logging.getLogger(__name__).debug(
+                f"[SKIPPING] Config file load - Does not exist: {config_file.resolve().as_posix()}"
+            )
 
-    def _load_backend(self) -> Union[BackendConfig, BackendPackage]:
-        return BackendFactory.build(backend_type=(self.settings.config.type))
+        return ManagerConfig.parse_obj(config_partial)
 
     def main(self) -> None:
         try:
             self.process()
-        except UnknownCommandError as error:
+        except (UnknownCommandError, UnknownArgumentError, ParseError) as error:
+            """Known Errors"""
+            logging.getLogger(__name__).debug(str(error))
             print(str(error))
-            Manager.display_generic_help()
-        except UnknownArgumentError as error:
+        except Exception as error:
+            """We encountered an unhandled exception.  This shouldn't happen. :?"""
+            logging.getLogger(__name__).debug(str(error))
             print(str(error))
-        except ParseError as error:
-            print(str(error))
+        Manager.display_generic_help()
 
     def process(self) -> None:
         argument_count: int = len(sys.argv)
@@ -67,16 +84,13 @@ class Manager:
                 raise UnknownCommandError(f"Unknown command {sys.argv[1]}") from error
 
     def subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
-        # TODO this needs per_command_timeout..
-
         if subcommand == CommandType.HELP:
             Manager.display_full_help()
         elif subcommand == CommandType.INIT:
             self.backend.initial_environment(arguments=arguments)
         elif subcommand == CommandType.RUN:
-            self.backend.run_command(arguments=arguments)
+            self.backend.run_command(arguments=arguments, per_command_timeout=self.settings.command.timeout)
         else:
-            # should not be possible to hit
             raise UnknownCommandError(f"Unknown command {subcommand}")
 
     @staticmethod
