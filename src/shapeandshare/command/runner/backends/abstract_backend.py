@@ -5,7 +5,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
+from ..contacts.dtos.package import Package
 from ..contacts.errors.subprocess_failure_error import SubprocessFailureError
+from ..contacts.errors.unknown_argument_error import UnknownArgumentError
+from ..contacts.errors.unknown_command_error import UnknownCommandError
 
 
 class AbstractBackend(ABC):
@@ -18,10 +21,29 @@ class AbstractBackend(ABC):
         The file specific to the backend being used.
     base_path
         The path to the config file.
+    DEFAULT_CONFIG_FILE
+        The default config file, defined within each super-class.
+    DEFAULT_CONFIG_PATH
+        The default location for the configuration file, default: Path(".")
+    package
+        Package DTO
     """
 
     config_file: str
     base_path: Path
+    DEFAULT_CONFIG_FILE: str
+    DEFAULT_CONFIG_PATH: Path = Path(".")
+    package: Package
+
+    def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
+        if config_file:
+            self.config_file = config_file
+        else:
+            self.config_file = self.DEFAULT_CONFIG_FILE
+        if base_path:
+            self.base_path: Path = Path(base_path)
+        else:
+            self.base_path: Path = self.DEFAULT_CONFIG_PATH
 
     @property
     def conf(self) -> Path:
@@ -46,17 +68,6 @@ class AbstractBackend(ABC):
         arguments: The arguments to used to build the default configuration.
         """
 
-    @abstractmethod
-    def run_command(self, arguments: list[str], per_command_timeout: Optional[int] = None) -> None:
-        """
-        Run a command
-
-        Parameters
-        ----------
-        arguments: The arguments to execute.
-        per_command_timeout: The per-command time out threshold.
-        """
-
     @staticmethod
     def _command_executor(commands: list[str], per_command_timeout: Optional[int] = None) -> None:
         """
@@ -78,3 +89,22 @@ class AbstractBackend(ABC):
                     raise SubprocessFailureError(
                         f"command {command} exceeded timeout limit of {per_command_timeout}"
                     ) from error
+
+    def run_command(self, arguments: list[str], per_command_timeout: Optional[int] = None) -> None:
+        """
+        Run a command
+
+        Parameters
+        ----------
+        arguments: The arguments to execute.
+        per_command_timeout: The per-command time out threshold.
+        """
+
+        if len(arguments) != 1:
+            raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
+        if arguments[0] in self.package.scripts:
+            AbstractBackend._command_executor(
+                commands=[self.package.scripts[arguments[0]]], per_command_timeout=per_command_timeout
+            )
+        else:
+            raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]")

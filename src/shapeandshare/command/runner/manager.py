@@ -15,12 +15,6 @@ from .contacts.errors.parse_error import ParseError
 from .contacts.errors.unknown_argument_error import UnknownArgumentError
 from .contacts.errors.unknown_command_error import UnknownCommandError
 
-# Global Defaults
-DEFAULT_CONFIG_FILE: str = ".bcrrc"
-DEFAULT_CONFIG_PATH: Path = Path(".")
-DEFAULT_COMMAND_TIMEOUT: int = 60  # In seconds
-DEFAULT_CONFIG_TYPE: str = "config"
-
 
 class Manager:
     """
@@ -32,10 +26,24 @@ class Manager:
         Backend for use within this manager installation.
     settings
         Manager settings configuration.
+    DEFAULT_CONFIG_FILE
+        The default config file to use for manager settings, default: ".bcrrc"
+    DEFAULT_CONFIG_PATH
+        The default location for the manager configuration file, default: Path(".")
+    DEFAULT_COMMAND_TIMEOUT
+        The default per command time out threshold, default: 60 (In seconds)
+    DEFAULT_CONFIG_TYPE
+        The default backend type, default: "config"
     """
 
     backend: Union[BackendConfig, BackendPackage]
     settings: ManagerConfig
+
+    # Global Defaults
+    DEFAULT_CONFIG_FILE: str = ".bcrrc"
+    DEFAULT_CONFIG_PATH: Path = Path(".")
+    DEFAULT_COMMAND_TIMEOUT: int = 60  # In seconds
+    DEFAULT_CONFIG_TYPE: str = "config"
 
     def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
         """
@@ -50,14 +58,13 @@ class Manager:
         """
 
         if not config_file:
-            config_file = DEFAULT_CONFIG_FILE
+            config_file = self.DEFAULT_CONFIG_FILE
         if not base_path:
-            base_path: Path = DEFAULT_CONFIG_PATH
-        self.settings = Manager._load_configuration(config_file=(base_path / config_file))
+            base_path: Path = self.DEFAULT_CONFIG_PATH
+        self.settings = self._load_configuration(config_file=(base_path / config_file))
         self.backend = BackendFactory.build(backend_type=self.settings.config.type)
 
-    @staticmethod
-    def _load_configuration(config_file: Path) -> ManagerConfig:
+    def _load_configuration(self, config_file: Path) -> ManagerConfig:
         """
         Load Manager Configuration
 
@@ -72,7 +79,10 @@ class Manager:
         """
 
         # load the defaults
-        config_partial: dict = {"command": {"timout": DEFAULT_COMMAND_TIMEOUT}, "config": {"type": DEFAULT_CONFIG_TYPE}}
+        config_partial: dict = {
+            "command": {"timout": self.DEFAULT_COMMAND_TIMEOUT},
+            "config": {"type": self.DEFAULT_CONFIG_TYPE},
+        }
 
         # Attempt to load
         if config_file.exists():
