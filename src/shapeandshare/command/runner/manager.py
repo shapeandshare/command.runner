@@ -135,7 +135,7 @@ class Manager:
         if subcommand == CommandType.HELP:
             Manager.display_full_help()
         elif subcommand == CommandType.INIT:
-            self.backend.initial_environment(arguments=arguments)
+            self.backend.init_environment(arguments=arguments)
         elif subcommand == CommandType.RUN:
             self.backend.run_command(arguments=arguments, per_command_timeout=self.settings.command.timeout)
         else:

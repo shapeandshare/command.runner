@@ -20,9 +20,9 @@ class BackendConfig(AbstractBackend):
         else:
             self.base_path: Path = Path(".")
 
-    def initial_environment(self, arguments: list[str]) -> None:
+    def init_environment(self, arguments: list[str]) -> None:
         if len(arguments) > 0:
-            print(f"initial_environment, Arguments: ({arguments})")
+            print(f"init_environment, Arguments: ({arguments})")
             raise UnknownArgumentError(command="init", message="No arguments to init are supported!")
 
         config: configparser.ConfigParser = configparser.ConfigParser()
