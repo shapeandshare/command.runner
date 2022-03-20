@@ -9,6 +9,7 @@ from typing import Optional, Union
 from .backends.backend_config import BackendConfig
 from .backends.backend_factory import BackendFactory
 from .backends.backend_package import BackendPackage
+from .common.utils import clean
 from .contacts.command_type import CommandType
 from .contacts.dtos.manager.manager_config import ManagerConfig
 from .contacts.errors.parse_error import ParseError
@@ -155,13 +156,15 @@ class Manager:
             self.backend.init_environment(arguments=arguments)
         elif subcommand == CommandType.RUN:
             self.backend.run_command(arguments=arguments, per_command_timeout=self.settings.command.timeout)
+        elif subcommand == CommandType.CLEAN:
+            clean(arguments=arguments)
         else:
             raise UnknownCommandError(f"Unknown command {subcommand}")
 
     @staticmethod
     def display_generic_help() -> None:
         """Print out summary help"""
-        summary: str = "Usage: sacr <command>\n" "\n" "where <command> is one of:\n" "help, init, run"
+        summary: str = "Usage: sacr <command>\n" "\n" "where <command> is one of:\n" "help, init, run, clean"
         print(summary)
 
     @staticmethod
