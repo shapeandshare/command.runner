@@ -5,6 +5,7 @@ from .command_parameters import CommandParameters
 from .config_parameters import ConfigParameters
 
 
+# pylint: disable=too-few-public-methods
 class ManagerConfig(BaseModel):
     """
     ManagerConfig dto

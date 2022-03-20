@@ -4,6 +4,7 @@ from typing import Optional
 from ..base_model import BaseModel
 
 
+# pylint: disable=too-few-public-methods
 class CommandParameters(BaseModel):
     """
     CommandParameters DTO

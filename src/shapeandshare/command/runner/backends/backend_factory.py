@@ -7,6 +7,7 @@ from ..backends.backend_package import BackendPackage
 from ..contacts.backend_type import BackendType
 
 
+# pylint: disable=too-few-public-methods
 class BackendFactory:
     """
     Backend Factory

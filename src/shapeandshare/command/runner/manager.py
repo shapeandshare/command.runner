@@ -94,7 +94,7 @@ class Manager:
         if config_file.exists():
             if config_file.is_file():
                 # load file..
-                logging.getLogger(__name__).debug(f"Loading config file: {config_file.resolve().as_posix()}")
+                logging.getLogger(__name__).debug("Loading config file: {%s}", config_file.resolve().as_posix())
                 config: configparser.ConfigParser = configparser.ConfigParser()
                 config.read(config_file.resolve().as_posix())
 
@@ -106,17 +106,18 @@ class Manager:
                         config_partial[section][key] = val
             else:
                 logging.getLogger(__name__).warning(
-                    f"[SKIPPING] Config file load - Was not a file? {config_file.resolve().as_posix()}"
+                    "[SKIPPING] Config file load - Was not a file? {%s}", config_file.resolve().as_posix()
                 )
         else:
             logging.getLogger(__name__).debug(
-                f"[SKIPPING] Config file load - Does not exist: {config_file.resolve().as_posix()}"
+                "[SKIPPING] Config file load - Does not exist: {%s}", config_file.resolve().as_posix()
             )
         return ManagerConfig.parse_obj(config_partial)
 
     def main(self) -> None:
         """Main entry point for the processing of the cli command."""
 
+        # pylint: disable=broad-except
         try:
             self._process()
         except (UnknownCommandError, UnknownArgumentError, ParseError) as error:
@@ -129,6 +130,7 @@ class Manager:
             print("---- Unhandled Exception ----")
             logging.getLogger(__name__).debug(str(error))
             print(str(error))
+        # pylint: enable=broad-except
 
     def _process(self) -> None:
         """Process CLI Arguments"""

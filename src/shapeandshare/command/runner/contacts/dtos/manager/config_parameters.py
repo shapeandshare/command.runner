@@ -6,6 +6,7 @@ from ...backend_type import BackendType
 from ..base_model import BaseModel
 
 
+# pylint: disable=too-few-public-methods
 class ConfigParameters(BaseModel):
     """
     ConfigParameters DTO

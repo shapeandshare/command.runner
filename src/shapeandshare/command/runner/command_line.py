@@ -1,5 +1,5 @@
 """ Command Line Tool Hook """
-import logging
+# import logging
 
 from .manager import Manager
 

@@ -81,7 +81,7 @@ class AbstractBackend(ABC):
 
         # Command executor
         for command in commands:
-            print(", ".join([thing for thing in command]))
+            print(", ".join(command))
             with subprocess.Popen(command, shell=True) as process:
                 try:
                     process.wait(timeout=per_command_timeout)
