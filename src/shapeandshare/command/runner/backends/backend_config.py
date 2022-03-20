@@ -31,6 +31,14 @@ class BackendConfig(AbstractBackend):
             raise UnknownArgumentError(command="init", message="No arguments to init are supported!")
 
     def _load_config(self) -> BackendModel:
+        """
+        Builds the `scripts` data from a configparser config.
+
+        Returns
+        -------
+        The Backend Model DTO.
+        """
+
         model_partial: dict = {"scripts": {}}
 
         # Attempt to load

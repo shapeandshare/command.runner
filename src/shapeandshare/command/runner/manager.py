@@ -62,7 +62,11 @@ class Manager:
         if not base_path:
             base_path: Path = self.DEFAULT_CONFIG_PATH
         self.settings = self._load_configuration(config_file=(base_path / config_file))
-        self.backend = BackendFactory.build(backend_type=self.settings.config.type)
+        self.backend = BackendFactory.build(
+            backend_type=self.settings.config.type,
+            config_file=self.settings.config.file,
+            base_path=self.settings.config.path,
+        )
 
     def _load_configuration(self, config_file: Path) -> ManagerConfig:
         """
@@ -81,7 +85,7 @@ class Manager:
         # load the defaults
         config_partial: dict = {
             "command": {"timout": self.DEFAULT_COMMAND_TIMEOUT},
-            "config": {"type": self.DEFAULT_CONFIG_TYPE},
+            "config": {"type": self.DEFAULT_CONFIG_TYPE, "file": None, "path": None},
         }
 
         # Attempt to load
