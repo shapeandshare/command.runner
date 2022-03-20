@@ -1,3 +1,5 @@
+""" Command Runner Manger Definition """
+
 import configparser
 import logging
 import sys
@@ -13,6 +15,7 @@ from .contacts.errors.parse_error import ParseError
 from .contacts.errors.unknown_argument_error import UnknownArgumentError
 from .contacts.errors.unknown_command_error import UnknownCommandError
 
+# Global Defaults
 DEFAULT_CONFIG_FILE: str = ".bcrrc"
 DEFAULT_CONFIG_PATH: Path = Path(".")
 DEFAULT_COMMAND_TIMEOUT: int = 60  # In seconds
@@ -20,10 +23,32 @@ DEFAULT_CONFIG_TYPE: str = "config"
 
 
 class Manager:
+    """
+    Command Runner Manger
+
+    Attributes
+    ----------
+    backend
+        Backend for use within this manager installation.
+    settings
+        Manager settings configuration.
+    """
+
     backend: Union[BackendConfig, BackendPackage]
     settings: ManagerConfig
 
     def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
+        """
+        Class Constractor
+
+        Parameters
+        ----------
+        config_file
+            The filename of the manager config file to load.
+        base_path
+            The local file system directory that the config file resides within.
+        """
+
         if not config_file:
             config_file = DEFAULT_CONFIG_FILE
         if not base_path:
@@ -33,7 +58,22 @@ class Manager:
 
     @staticmethod
     def _load_configuration(config_file: Path) -> ManagerConfig:
+        """
+
+        Parameters
+        ----------
+        config_file
+            Path to for the local file system configuration file to load.
+
+        Returns
+        -------
+            A ManagerConfig DTO for the configuration file.
+        """
+
+        # load the defaults
         config_partial: dict = {"command": {"timout": DEFAULT_COMMAND_TIMEOUT}, "config": {"type": DEFAULT_CONFIG_TYPE}}
+
+        # Attempt to load
         if config_file.exists():
             if config_file.is_file():
                 # load file..
@@ -59,14 +99,16 @@ class Manager:
         return ManagerConfig.parse_obj(config_partial)
 
     def main(self) -> None:
+        """Main entry point for the processing of the cli command."""
+
         try:
             self.process()
         except (UnknownCommandError, UnknownArgumentError, ParseError) as error:
-            """Known Errors"""
+            # Known Errors
             logging.getLogger(__name__).debug(str(error))
             print(str(error))
         except Exception as error:
-            """We encountered an unhandled exception.  This shouldn't happen. :?"""
+            # We encountered an unhandled exception.  This shouldn't happen. :?
             logging.getLogger(__name__).debug(str(error))
             print(str(error))
         Manager.display_generic_help()
