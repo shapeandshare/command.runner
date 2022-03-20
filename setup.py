@@ -4,8 +4,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="shapeandshare-command-runner",
-    version="0.2.0",
+    name="sacr",
+    version="0.3.0",
     author="Joshua C. Burt",
     author_email="joshburt@shapeandshare.com",
     description="Aliased command runner",
@@ -17,6 +17,6 @@ setuptools.setup(
     install_requires=["pydantic>=1.9.0"],
     # https://python-packaging.readthedocs.io/en/latest/command-line-scripts.html#the-console-scripts-entry-point
     entry_points={
-        "console_scripts": ["bcr=shapeandshare.command.runner.command_line:main"],
+        "console_scripts": ["sacr=shapeandshare.command.runner.command_line:main", "cr=shapeandshare.command.runner.command_line:main"],
     },
 )
