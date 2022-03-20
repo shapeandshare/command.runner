@@ -2,5 +2,5 @@
 from pydantic import BaseModel
 
 
-class Package(BaseModel):
+class BackendModel(BaseModel):
     scripts: dict

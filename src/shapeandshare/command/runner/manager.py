@@ -118,12 +118,12 @@ class Manager:
             # Known Errors
             logging.getLogger(__name__).debug(str(error))
             print(str(error))
+            Manager.display_generic_help()
         except Exception as error:
             # We encountered an unhandled exception.  This shouldn't happen.
             print("---- Unhandled Exception ----")
             logging.getLogger(__name__).debug(str(error))
             print(str(error))
-        Manager.display_generic_help()
 
     def _process(self) -> None:
         """Process CLI Arguments"""
