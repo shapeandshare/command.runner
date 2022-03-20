@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="sacr",
-    version="0.3.1",
+    version="0.3.2",
     author="Joshua C. Burt",
     author_email="joshburt@shapeandshare.com",
     description="Aliased Command Runner",
@@ -17,6 +17,9 @@ setuptools.setup(
     install_requires=["pydantic>=1.9.0"],
     # https://python-packaging.readthedocs.io/en/latest/command-line-scripts.html#the-console-scripts-entry-point
     entry_points={
-        "console_scripts": ["sacr=shapeandshare.command.runner.command_line:main", "cr=shapeandshare.command.runner.command_line:main"],
+        "console_scripts": [
+            "sacr=shapeandshare.command.runner.command_line:main",
+            "cr=shapeandshare.command.runner.command_line:main",
+        ],
     },
 )

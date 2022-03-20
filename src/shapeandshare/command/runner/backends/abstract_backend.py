@@ -89,6 +89,8 @@ class AbstractBackend(ABC):
                     raise SubprocessFailureError(
                         f"command {command} exceeded timeout limit of {per_command_timeout}"
                     ) from error
+                if process.returncode != 0:
+                    raise SubprocessFailureError(f"command {command} failed with return code of {process.returncode}")
 
     def run_command(self, arguments: list[str], per_command_timeout: Optional[int] = None) -> None:
         """
