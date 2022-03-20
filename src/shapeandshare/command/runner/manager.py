@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from .backends.backend_config import BackendConfig
-from .backends.backend_factory import BackendFactory, BackendType
+from .backends.backend_factory import BackendFactory
 from .backends.backend_package import BackendPackage
 from .contacts.command_type import CommandType
 from .contacts.dtos.manager.manager_config import ManagerConfig
