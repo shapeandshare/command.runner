@@ -7,46 +7,41 @@ from .backends.backend_config import BackendConfig
 from .backends.backend_factory import BackendFactory, BackendType
 from .backends.backend_package import BackendPackage
 from .contacts.command_type import CommandType
+from .contacts.dtos.manager.manager_config import ManagerConfig
 from .contacts.errors.parse_error import ParseError
 from .contacts.errors.unknown_argument_error import UnknownArgumentError
 from .contacts.errors.unknown_command_error import UnknownCommandError
 
 
 class Manager:
-
-    config_file: str
-    base_path: Path
     backend: Union[BackendConfig, BackendPackage]
+    settings: ManagerConfig
 
     def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
-        if config_file:
-            self.config_file = config_file
-        else:
-            self.config_file = ".bcrrc"
-        if base_path:
-            self.base_path: Path = Path(base_path)
-        else:
-            self.base_path: Path = Path(".")
+        if not config_file:
+            config_file = ".bcrrc"
+        if not base_path:
+            base_path: Path = Path(".")
+        self.settings = Manager._load_configuration(config_file=(base_path / config_file))
         self.backend = self._load_backend()
 
-    @property
-    def conf(self) -> Path:
-        return self.base_path / self.config_file
-
-    def _load_backend(self) -> Union[BackendConfig, BackendPackage]:
-        backend: str = "config"
-        if self.conf.exists():
-            if self.conf.is_file():
+    @staticmethod
+    def _load_configuration(config_file: Path) -> ManagerConfig:
+        config_partial: dict = {"command": {"timout": 60}, "config": {"type": "config"}}
+        if config_file.exists():
+            if config_file.is_file():
                 # load file..
                 config: configparser.ConfigParser = configparser.ConfigParser()
-                config.read(self.conf.resolve().as_posix())
-                try:
-                    backend: str = config["config"]["backend"]
-                except KeyError as error:
-                    raise UnknownCommandError("Missing backend in config section") from error
-            else:
-                raise ParseError(f"{self.conf.resolve().as_posix()} exists but is not a file, expected a file")
-        return BackendFactory.build(backend_type=BackendType(backend))
+                config.read(config_file.resolve().as_posix())
+                for section in config.sections():
+                    if section not in config_partial:
+                        config_partial[section] = {}
+                    for (key, val) in config.items(section):
+                        config_partial[section][key] = val
+        return ManagerConfig.parse_obj(config_partial)
+
+    def _load_backend(self) -> Union[BackendConfig, BackendPackage]:
+        return BackendFactory.build(backend_type=(self.settings.config.type))
 
     def main(self) -> None:
         try:
@@ -72,6 +67,8 @@ class Manager:
                 raise UnknownCommandError(f"Unknown command {sys.argv[1]}") from error
 
     def subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
+        # TODO this needs per_command_timeout..
+
         if subcommand == CommandType.HELP:
             Manager.display_full_help()
         elif subcommand == CommandType.INIT:

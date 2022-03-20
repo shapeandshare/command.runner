@@ -34,11 +34,13 @@ class BackendPackage(AbstractBackend):
         # with open(self.conf.resolve().as_posix(), mode="w", encoding="utf-8") as configfile:
         #     config.write(configfile)
 
-    def run_command(self, arguments: list[str]) -> None:
+    def run_command(self, arguments: list[str], per_command_timeout: Optional[int] = None) -> None:
         # print(f"run_command, Arguments: ({arguments})")
         if len(arguments) != 1:
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
         if arguments[0] in self.package.scripts:
-            BackendPackage._command_executor(commands=[self.package.scripts[arguments[0]]])
+            BackendPackage._command_executor(
+                commands=[self.package.scripts[arguments[0]]], per_command_timeout=per_command_timeout
+            )
         else:
             raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]")

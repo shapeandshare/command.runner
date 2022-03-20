@@ -31,7 +31,7 @@ class BackendConfig(AbstractBackend):
         with open(self.conf.resolve().as_posix(), mode="w", encoding="utf-8") as configfile:
             config.write(configfile)
 
-    def run_command(self, arguments: list[str]) -> None:
+    def run_command(self, arguments: list[str], per_command_timeout: Optional[int] = None) -> None:
         if len(arguments) == 0:
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
         config: configparser.ConfigParser = configparser.ConfigParser()
@@ -51,4 +51,4 @@ class BackendConfig(AbstractBackend):
             commands = raw_commands
 
         # Command executor
-        BackendConfig._command_executor(commands=commands)
+        BackendConfig._command_executor(commands=commands, per_command_timeout=per_command_timeout)

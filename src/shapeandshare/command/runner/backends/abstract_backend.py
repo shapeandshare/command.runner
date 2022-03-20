@@ -1,6 +1,7 @@
 import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Optional
 
 from ..contacts.errors.subprocess_failure_error import SubprocessFailureError
 
@@ -18,11 +19,11 @@ class AbstractBackend(ABC):
         """initial_environment"""
 
     @abstractmethod
-    def run_command(self, arguments: list[str]) -> None:
+    def run_command(self, arguments: list[str], per_command_timeout: Optional[int] = None) -> None:
         """run_command"""
 
     @staticmethod
-    def _command_executor(commands: list[str], per_command_timeout: int = 60) -> None:
+    def _command_executor(commands: list[str], per_command_timeout: Optional[int] = None) -> None:
         # Command executor
         for command in commands:
             print(command)

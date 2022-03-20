@@ -1,2 +1,5 @@
+[command]
+timeout=60
+
 [config]
-backend=config
+backend=package
