@@ -31,7 +31,7 @@ class Manager:
     DEFAULT_CONFIG_PATH
         The default location for the manager configuration file, default: Path(".")
     DEFAULT_COMMAND_TIMEOUT
-        The default per command time out threshold, default: 60 (In seconds)
+        The default per command time out threshold, default: None (no timeout)
     DEFAULT_CONFIG_TYPE
         The default backend type, default: "config"
     """
@@ -42,7 +42,7 @@ class Manager:
     # Global Defaults
     DEFAULT_CONFIG_FILE: str = ".bcrrc"
     DEFAULT_CONFIG_PATH: Path = Path(".")
-    DEFAULT_COMMAND_TIMEOUT: int = 60  # In seconds
+    DEFAULT_COMMAND_TIMEOUT: Optional[int] = None  # In seconds
     DEFAULT_CONFIG_TYPE: str = "config"
 
     def __init__(self, config_file: Optional[str] = None, base_path: Optional[str] = None):
@@ -57,10 +57,12 @@ class Manager:
             The local file system directory that the config file resides within.
         """
 
-        if not config_file:
+        if config_file is None:
             config_file = self.DEFAULT_CONFIG_FILE
-        if not base_path:
-            base_path: Path = self.DEFAULT_CONFIG_PATH
+        if base_path is None:
+            base_path = self.DEFAULT_CONFIG_PATH
+        else:
+            base_path = Path(base_path)
         self.settings = self._load_configuration(config_file=(base_path / config_file))
         self.backend = BackendFactory.build(
             backend_type=self.settings.config.type,
@@ -84,7 +86,7 @@ class Manager:
 
         # load the defaults
         config_partial: dict = {
-            "command": {"timout": self.DEFAULT_COMMAND_TIMEOUT},
+            "command": {"timeout": self.DEFAULT_COMMAND_TIMEOUT},
             "config": {"type": self.DEFAULT_CONFIG_TYPE, "file": None, "path": None},
         }
 
@@ -110,7 +112,6 @@ class Manager:
             logging.getLogger(__name__).debug(
                 f"[SKIPPING] Config file load - Does not exist: {config_file.resolve().as_posix()}"
             )
-
         return ManagerConfig.parse_obj(config_partial)
 
     def main(self) -> None:

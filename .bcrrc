@@ -1,5 +1,7 @@
 [command]
+# omit this to have no timeout
 timeout=60
 
 [config]
-backend=package
+# config, package are supported
+type=config

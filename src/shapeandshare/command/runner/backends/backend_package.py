@@ -15,7 +15,7 @@ class BackendPackage(AbstractBackend):
     Attributes
     ----------
     DEFAULT_CONFIG_FILE
-        The default config file, default: "model.json"
+        The default config file, default: "package.json"
     """
 
     DEFAULT_CONFIG_FILE: str = "package.json"
