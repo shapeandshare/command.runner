@@ -1,3 +1,6 @@
+"""Unknown Argument Error Definition"""
+
+
 class UnknownArgumentError(Exception):
     """UnknownArgumentError"""
 
