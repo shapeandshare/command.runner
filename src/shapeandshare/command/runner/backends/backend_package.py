@@ -27,5 +27,8 @@ class BackendPackage(AbstractBackend):
     def init_environment(self, arguments: list[str]) -> None:
         if len(arguments) > 0:
             raise UnknownArgumentError(command="init", message="No arguments to init are supported!")
-        message: str = "Use: npm init" "For additional details see:" "https://docs.npmjs.com/cli/v8/using-npm/scripts"
+        message: str = (
+            "Use `npm init` to generate a new package.json configuration file.\n"
+            "For additional details see: https://docs.npmjs.com/cli/v8/using-npm/scripts"
+        )
         print(message)

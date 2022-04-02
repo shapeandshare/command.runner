@@ -9,7 +9,7 @@ from typing import Optional, Union
 from .backends.backend_config import BackendConfig
 from .backends.backend_factory import BackendFactory
 from .backends.backend_package import BackendPackage
-from .common.utils import clean
+from .common.utils import clean, init_environment_argument_parser
 from .contacts.command_type import CommandType
 from .contacts.dtos.manager.manager_config import ManagerConfig
 from .contacts.errors.parse_error import ParseError
@@ -39,6 +39,7 @@ class Manager:
 
     backend: Union[BackendConfig, BackendPackage]
     settings: ManagerConfig
+    config_file: Path
 
     # Global Defaults
     DEFAULT_CONFIG_FILE: str = ".sacrrc"
@@ -64,7 +65,8 @@ class Manager:
             base_path = self.DEFAULT_CONFIG_PATH
         else:
             base_path = Path(base_path)
-        self.settings = self._load_configuration(config_file=(base_path / config_file))
+        self.config_file = base_path / config_file
+        self.settings = self._load_configuration(config_file=self.config_file)
         self.backend = BackendFactory.build(
             backend_type=self.settings.config.type,
             config_file=self.settings.config.file,
@@ -139,20 +141,30 @@ class Manager:
         argument_count: int = len(sys.argv)
 
         if argument_count == 1:
+            # CLI was run without any arguments
             Manager.display_generic_help()
         else:
             try:
+                # Get the subcommand to run and execute it.
                 command: CommandType = CommandType(sys.argv[1])
                 self._subcommand(subcommand=command, arguments=sys.argv[2:])
             except ValueError as error:
                 raise UnknownCommandError(f"Unknown command {sys.argv[1]}") from error
 
-    def _subcommand(self, subcommand: CommandType, arguments=list[str]) -> None:
-        """Process the given subcommand"""
+    def _subcommand(self, subcommand: CommandType, arguments: list[str]) -> None:
+        """
+        Process the given subcommand
+
+        Parameters
+        ----------
+        subcommand: The subcommand to execute
+        arguments: The CLI arguments for the target command.
+        """
 
         if subcommand == CommandType.HELP:
             Manager.display_full_help()
         elif subcommand == CommandType.INIT:
+            self._init_environment(arguments=arguments)
             self.backend.init_environment(arguments=arguments)
         elif subcommand == CommandType.RUN:
             self.backend.run_command(arguments=arguments, per_command_timeout=self.settings.command.timeout)
@@ -165,9 +177,45 @@ class Manager:
     def display_generic_help() -> None:
         """Print out summary help"""
         summary: str = "Usage: sacr <command>\n" "\n" "where <command> is one of:\n" "help, init, run, clean"
+
         print(summary)
 
     @staticmethod
     def display_full_help():
         """Print our full help"""
-        Manager.display_generic_help()
+        summary: str = (
+            "Usage: sacr <command>\n"
+            "\n"
+            "where <command> is one of:\n"
+            "help, init, run, clean\n"
+            "\n"
+            "help - Displays this help dialog.\n"
+            "init - Will create initial configuration file.\n"
+            "   This will create default .racrrc and racr.config files in the current working directory\n"
+            "run <subcommand> - Execute the defined subcommand.\n"
+            "   Subcommands must be defined within a supported file (racr.config, package.json)\n"
+            "clean - Perform unix like `rm -rf` like removal.\n"
+        )
+
+        print(summary)
+
+    def _init_environment(self, arguments: list[str]) -> None:
+        force: bool = init_environment_argument_parser(arguments=arguments)
+
+        if self.config_file.exists() and force or not self.config_file.exists():
+            # write default config
+            new_config: configparser.ConfigParser = configparser.ConfigParser(delimiters="=")
+            new_config.add_section(section="command")
+            new_config.set(section="command", option="timeout", value="60")
+            new_config.add_section(section="config")
+            new_config.set(section="config", option="type", value="config")
+
+            with open(self.config_file.resolve().as_posix(), mode="w", encoding="utf-8") as file:
+                new_config.write(file)
+            print(f"Sample config created at: {self.config_file.resolve().as_posix()}")
+        else:
+            message: str = (
+                f"A configuration file already exists at {self.config_file.resolve()}. "
+                "To over-ride use `--force` flag."
+            )
+            print(message)
