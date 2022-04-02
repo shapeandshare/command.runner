@@ -81,8 +81,8 @@ class AbstractBackend(ABC):
 
         # Command executor
         for command in commands:
-            print(command if isinstance(command, str) else ", ".join(command))
             with subprocess.Popen(command, shell=True) as process:
+                print(f"> {command}")
                 try:
                     process.wait(timeout=per_command_timeout)
                 except subprocess.TimeoutExpired as error:
@@ -112,7 +112,7 @@ class AbstractBackend(ABC):
             raise UnknownArgumentError(command="run", message="Expected exactly 1 argument to run!")
         if arguments[0] in self.model.scripts:
             AbstractBackend._command_executor(
-                commands=[self.model.scripts[arguments[0]]], per_command_timeout=per_command_timeout
+                commands=self.model.scripts[arguments[0]], per_command_timeout=per_command_timeout
             )
         else:
             raise UnknownCommandError(f"Unknown command {arguments[0]} in [scripts]")
