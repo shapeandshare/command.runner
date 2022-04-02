@@ -87,10 +87,16 @@ class AbstractBackend(ABC):
                     process.wait(timeout=per_command_timeout)
                 except subprocess.TimeoutExpired as error:
                     raise SubprocessFailureError(
-                        f"command {command} exceeded timeout limit of {per_command_timeout}"
+                        command=command, message=f"Exceeded timeout limit of {per_command_timeout}", returncode=1
                     ) from error
                 if process.returncode != 0:
-                    raise SubprocessFailureError(f"command {command} failed with return code of {process.returncode}")
+                    if process.stdout:
+                        print(process.stdout)
+                    if process.stderr:
+                        print(process.stderr)
+                    raise SubprocessFailureError(
+                        command=command, message="command failed", returncode=process.returncode
+                    )
 
     def run_command(self, arguments: list[str], per_command_timeout: Optional[int] = None) -> None:
         """

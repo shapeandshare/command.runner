@@ -13,6 +13,7 @@ from .common.utils import clean, init_environment_argument_parser
 from .contacts.command_type import CommandType
 from .contacts.dtos.manager.manager_config import ManagerConfig
 from .contacts.errors.parse_error import ParseError
+from .contacts.errors.subprocess_failure_error import SubprocessFailureError
 from .contacts.errors.unknown_argument_error import UnknownArgumentError
 from .contacts.errors.unknown_command_error import UnknownCommandError
 
@@ -128,11 +129,17 @@ class Manager:
             logging.getLogger(__name__).debug(str(error))
             print(str(error))
             Manager.display_generic_help()
+        except SubprocessFailureError as error:
+            print("---- Subprocess Failure ----")
+            print(error)
+            sys.exit(error.returncode)
         except Exception as error:
             # We encountered an unhandled exception.  This shouldn't happen.
             print("---- Unhandled Exception ----")
             logging.getLogger(__name__).debug(str(error))
+            print(type(error))
             print(str(error))
+            raise error
         # pylint: enable=broad-except
 
     def _process(self) -> None:
