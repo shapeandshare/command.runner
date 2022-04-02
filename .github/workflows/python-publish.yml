@@ -23,10 +23,15 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.x'
+    - uses: actions/setup-node@v3
+      with:
+        # The Node.js version to configure
+        node-version: '14'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build
+        npm ci
+        npm run prebuild
     - name: Build package
       run: python -m build
     - name: Publish package
