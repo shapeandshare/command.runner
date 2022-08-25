@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.0.0 (08/25/2022)
+- Added project documentation.
+
 ## 0.6.2 (04/02/2022)
 - Updated build pipelines
 
