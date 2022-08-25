@@ -1,6 +1,6 @@
 {
   "name": "shapeandshare.command.runner",
-  "version": "0.6.2",
+  "version": "1.0.0",
   "scripts": {
     "audit": "npm run audit:npm && npm run audit:pip",
     "audit:npm": "npm audit --production",
