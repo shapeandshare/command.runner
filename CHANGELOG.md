@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.1.0 (12/18/2022)
+- Added Anaconda (conda) package building and publishing.
+
 ## 1.0.0 (08/25/2022)
 - Added project documentation.
 
