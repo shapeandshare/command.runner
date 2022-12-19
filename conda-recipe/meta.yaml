@@ -1,0 +1,33 @@
+{% set name = "shapeandshare.command.runner" %}
+{% set version = "1.1.0" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  path: ../
+
+build:
+  number: 0
+  noarch: python
+  script:
+    - {{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv
+  entry_points:
+    - sacr = shapeandshare.command.runner.command_line:main
+
+requirements:
+  host:
+    - pip
+    - python>=3.9
+    - setuptools
+  run:
+    - python>=3.9
+    - pydantic >=1.9.0
+
+
+about:
+  home: https://github.com/shapeandshare/command.runner
+  summary: "Aliased Command Runner"
+  license: MIT
+  license_file: LICENSE

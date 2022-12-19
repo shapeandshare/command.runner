@@ -14,9 +14,10 @@ on:
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -39,3 +40,21 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Install dependencies
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        channels: defaults,conda-forge,joshburt
+        auto-activate-base: false
+        activate-environment: shapeandshare.command.runner
+        environment-file: environment.github.yml
+    - name: Conda Info
+      run: |
+        conda info
+    - name: Conda Build
+      run: |
+        conda build conda-recipe
+    - name: Publish
+      env:
+        ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+      run: |
+        anaconda --verbose --token $ANACONDA_TOKEN upload --user joshburt /usr/share/miniconda/envs/shapeandshare.command.runner/conda-bld/noarch/shapeandshare.command.runner-*.tar.bz2 --force
